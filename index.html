@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Neon Drums</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+    overscroll-behavior: none;
+    touch-action: none;
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    background: radial-gradient(circle at 50% 0%, #1a1a2e, #0a0a15 70%);
+    font-family: 'Segoe UI', sans-serif;
+    color: #fff;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .synth {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(145deg, #1e1e2f, #14141f);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    box-shadow: inset 0 0 80px rgba(255, 0, 170, 0.05);
+  }
+
+  .synth::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #ff00aa, #00ffc8, transparent);
+    z-index: 10;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 13px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: #ff00aa;
+    text-shadow: 0 0 10px rgba(255, 0, 170, 0.6);
+    font-weight: 300;
+    flex-shrink: 0;
+  }
+
+  .top-bar {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+
+  .preset-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .preset-btn {
+    padding: 8px 14px;
+    background: #0a0a15;
+    border: 1px solid #333;
+    color: #666;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    touch-action: manipulation;
+    min-height: 40px;
+    min-width: 60px;
+  }
+
+  .preset-btn.active {
+    background: linear-gradient(180deg, #ff00aa, #990066);
+    color: #fff;
+    border-color: #ff00aa;
+    box-shadow: 0 0 15px rgba(255, 0, 170, 0.6);
+  }
+
+  .control-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #0a0a15;
+    border-radius: 8px;
+    padding: 4px 10px;
+    border: 1px solid #333;
+  }
+
+  .control-box .box-label {
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: #666;
+    text-transform: uppercase;
+  }
+
+  .switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: #0a0a15;
+    border-radius: 12px;
+    border: 1px solid #333;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: #444;
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+
+  .switch.on {
+    background: linear-gradient(180deg, #ff00aa, #990066);
+    border-color: #ff00aa;
+    box-shadow: 0 0 12px rgba(255, 0, 170, 0.6);
+  }
+
+  .switch.on::after {
+    left: 22px;
+    background: #fff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+  }
+
+  .knob-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 80px;
+    max-width: 180px;
+  }
+
+  .knob-group label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #888;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    background: #0a0a15;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+    touch-action: pan-y;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: radial-gradient(circle at 30% 30%, #ff00aa, #990066);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 
+      0 0 10px rgba(255, 0, 170, 0.8),
+      0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: radial-gradient(circle at 30% 30%, #ff00aa, #990066);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 0, 170, 0.8);
+  }
+
+  .pads-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+    min-height: 200px;
+  }
+
+  .pads {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+
+  .pad {
+    background: linear-gradient(145deg, #1e1e2f, #0a0a15);
+    border: 1px solid #333;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.08s;
+    position: relative;
+    overflow: hidden;
+    touch-action: none;
+    padding: 6px;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 4px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  .pad .icon {
+    font-size: clamp(20px, 4vw, 34px);
+    line-height: 1;
+    filter: drop-shadow(0 0 6px rgba(255, 0, 170, 0.4));
+    transition: transform 0.08s;
+  }
+
+  .pad .name {
+    font-size: clamp(9px, 1.4vw, 12px);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #888;
+    transition: color 0.08s;
+    text-align: center;
+  }
+
+  .pad .key-hint {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 9px;
+    color: #444;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+  }
+
+  .pad::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 0, 170, 0.4), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+  }
+
+  .pad.active {
+    background: linear-gradient(145deg, #ff00aa, #990066);
+    border-color: #ff00aa;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 0 25px rgba(255, 0, 170, 0.9);
+  }
+
+  .pad.active .icon {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8));
+  }
+
+  .pad.active .name {
+    color: #fff;
+  }
+
+  .pad.active::after {
+    opacity: 1;
+  }
+
+  /* Kategoriefarben als Akzentstreifen oben am Pad */
+  .pad[data-cat="kick"]    { border-top: 3px solid #ff4466; }
+  .pad[data-cat="snare"]   { border-top: 3px solid #ffaa00; }
+  .pad[data-cat="hat"]     { border-top: 3px solid #00ffc8; }
+  .pad[data-cat="tom"]     { border-top: 3px solid #4488ff; }
+  .pad[data-cat="clap"]    { border-top: 3px solid #ff00aa; }
+  .pad[data-cat="cymbal"]  { border-top: 3px solid #cc44ff; }
+  .pad[data-cat="perc"]    { border-top: 3px solid #88ff44; }
+
+  .display {
+    height: 34px;
+    background: #0a0a15;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+    font-family: 'Courier New', monospace;
+    color: #ff00aa;
+    letter-spacing: 3px;
+    font-size: 12px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+    text-shadow: 0 0 8px rgba(255, 0, 170, 0.8);
+    flex-shrink: 0;
+  }
+
+  .display .label {
+    font-size: 9px;
+    color: #666;
+    letter-spacing: 2px;
+  }
+
+  /* Orientierungshinweis */
+  @media (orientation: portrait) and (max-width: 600px) {
+    .rotate-hint { display: flex; }
+  }
+
+  .rotate-hint {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10, 10, 21, 0.95);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+    color: #ff00aa;
+    font-size: 16px;
+    letter-spacing: 3px;
+    text-align: center;
+    padding: 30px;
+  }
+
+  .rotate-hint .icon { font-size: 60px; animation: rotate 2s ease-in-out infinite; }
+
+  @keyframes rotate {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(90deg); }
+  }
+
+  @media (min-width: 768px) {
+    .synth { padding: 20px 25px; gap: 14px; }
+    h1 { font-size: 16px; letter-spacing: 7px; }
+    .preset-btn { padding: 10px 16px; font-size: 12px; }
+    .display { height: 42px; font-size: 14px; }
+    .knob-group label { font-size: 11px; }
+    .pads { gap: 12px; }
+    .pad { border-radius: 16px; }
+  }
+
+  @media (min-width: 1024px) {
+    .synth { padding: 25px 35px; }
+    h1 { font-size: 18px; letter-spacing: 8px; }
+  }
+</style>
+</head>
+<body>
+  <div class="rotate-hint">
+    <div class="icon">📱</div>
+    <div>Bitte Gerät drehen</div>
+    <div style="font-size: 12px; color: #666;">Für die beste Erfahrung</div>
+  </div>
+
+  <div class="synth">
+    <h1>◆ Neon Drums ◆</h1>
+
+    <div class="top-bar">
+      <div class="preset-buttons">
+        <button class="preset-btn active" data-kit="808">808</button>
+        <button class="preset-btn" data-kit="909">909</button>
+        <button class="preset-btn" data-kit="acoustic">Acoustic</button>
+        <button class="preset-btn" data-kit="electro">Electro</button>
+      </div>
+
+      <div class="control-box">
+        <span class="box-label">Reverb</span>
+        <div class="switch" id="reverbSwitch"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="knob-group">
+        <label>Volume</label>
+        <input type="range" id="volume" min="0" max="1" step="0.01" value="0.6">
+      </div>
+      <div class="knob-group">
+        <label>Pitch</label>
+        <input type="range" id="pitch" min="0.5" max="2" step="0.01" value="1">
+      </div>
+      <div class="knob-group">
+        <label>Decay</label>
+        <input type="range" id="decay" min="0.5" max="2" step="0.01" value="1">
+      </div>
+    </div>
+
+    <div class="pads-wrapper">
+      <div class="pads" id="pads"></div>
+    </div>
+
+    <div class="display">
+      <span class="label">LAST HIT</span>
+      <span id="display">READY</span>
+      <span class="label" id="kitDisplay">808</span>
+    </div>
+  </div>
+
+<script>
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AudioContext();
+
+  const padsContainer = document.getElementById('pads');
+  const display = document.getElementById('display');
+  const kitDisplay = document.getElementById('kitDisplay');
+  const volumeSlider = document.getElementById('volume');
+  const pitchSlider = document.getElementById('pitch');
+  const decaySlider = document.getElementById('decay');
+  const reverbSwitch = document.getElementById('reverbSwitch');
+
+  let currentKit = '808';
+  let reverbOn = false;
+
+  // Reverb Impulse Response synthetisch erzeugen
+  let reverbNode = null;
+  function getReverb() {
+    if (reverbNode) return reverbNode;
+    const length = ctx.sampleRate * 1.5;
+    const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = impulse.getChannelData(ch);
+      for (let i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2.5);
+      }
+    }
+    const conv = ctx.createConvolver();
+    conv.buffer = impulse;
+
+    const wet = ctx.createGain();
+    wet.gain.value = 0.35;
+    conv.connect(wet);
+    reverbNode = { conv, wet };
+    return reverbNode;
+  }
+
+  // Zentraler Output-Knoten mit Volume
+  const masterGain = ctx.createGain();
+  masterGain.gain.value = parseFloat(volumeSlider.value);
+  masterGain.connect(ctx.destination);
+
+  volumeSlider.addEventListener('input', () => {
+    masterGain.gain.value = parseFloat(volumeSlider.value);
+  });
+
+  reverbSwitch.addEventListener('click', () => {
+    reverbOn = !reverbOn;
+    reverbSwitch.classList.toggle('on', reverbOn);
+  });
+
+  // Kleine Helfer
+  const pitch = () => parseFloat(pitchSlider.value);
+  const decay = () => parseFloat(decaySlider.value);
+
+  function envGain(attack, decayTime, peak = 1) {
+    const g = ctx.createGain();
+    const now = ctx.currentTime;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(peak, now + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + attack + decayTime);
+    return g;
+  }
+
+  function routeToOutput(node) {
+    node.connect(masterGain);
+    if (reverbOn) {
+      const { conv, wet } = getReverb();
+      node.connect(conv);
+      wet.connect(masterGain);
+    }
+  }
+
+  // ---------- Drum-Sounds (synthetisch) ----------
+
+  function playKick(time = 0.6, tune = 1) {
+    const osc = ctx.createOscillator();
+    const gain = envGain(0.001, 0.35 * decay() * time, 1);
+    const now = ctx.currentTime;
+    const baseFreq = 150 * tune * pitch();
+    osc.frequency.setValueAtTime(baseFreq * 1.8, now);
+    osc.frequency.exponentialRampToValueAtTime(40 * pitch(), now + 0.15 * decay() * time);
+    osc.type = 'sine';
+    osc.connect(gain);
+    routeToOutput(gain);
+    osc.start(now);
+    osc.stop(now + 0.5 * decay() * time);
+
+    // Klick-Anteil
+    const click = ctx.createOscillator();
+    const clickGain = envGain(0.001, 0.02, 0.4);
+    click.frequency.value = 800 * pitch();
+    click.type = 'square';
+    click.connect(clickGain);
+    routeToOutput(clickGain);
+    click.start(now);
+    click.stop(now + 0.03);
+  }
+
+  function playSnare(time = 0.2, tone = 1) {
+    const now = ctx.currentTime;
+    // Noise-Teil
+    const bufferSize = ctx.sampleRate * 0.3 * decay() * time;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 1800 * pitch() * tone;
+    bp.Q.value = 0.8;
+
+    const noiseGain = envGain(0.001, 0.18 * decay() * time, 0.8);
+    noise.connect(bp);
+    bp.connect(noiseGain);
+    routeToOutput(noiseGain);
+    noise.start(now);
+    noise.stop(now + 0.35 * decay() * time);
+
+    // Body-Teil
+    const osc = ctx.createOscillator();
+    osc.frequency.value = 180 * pitch();
+    osc.type = 'triangle';
+    const oscGain = envGain(0.001, 0.1 * decay() * time, 0.6);
+    osc.connect(oscGain);
+    routeToOutput(oscGain);
+    osc.start(now);
+    osc.stop(now + 0.15 * decay() * time);
+  }
+
+  function playClap(time = 0.2) {
+    const now = ctx.currentTime;
+    const bufferSize = ctx.sampleRate * 0.25 * decay() * time;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+    // 3 kurze Cluster wie bei einer echten Clap
+    for (let i = 0; i < 3; i++) {
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      const start = now + i * 0.01;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 1200 * pitch();
+      bp.Q.value = 1.2;
+
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(0.7, start + 0.001);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + 0.1 * decay() * time);
+      src.connect(bp);
+      bp.connect(g);
+      routeToOutput(g);
+      src.start(start);
+      src.stop(start + 0.12 * decay() * time);
+    }
+  }
+
+  function playHat(time = 0.05, open = false) {
+    const now = ctx.currentTime;
+    const dur = (open ? 0.35 : 0.05) * decay() * time;
+    const bufferSize = ctx.sampleRate * (dur + 0.05);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 7000 * pitch();
+
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 10000 * pitch();
+    bp.Q.value = 0.5;
+
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.linearRampToValueAtTime(0.5, now + 0.001);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+    noise.connect(hp);
+    hp.connect(bp);
+    bp.connect(g);
+    routeToOutput(g);
+    noise.start(now);
+    noise.stop(now + dur + 0.02);
+  }
+
+  function playTom(freq = 150, time = 0.4) {
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq * pitch() * 1.5, now);
+    osc.frequency.exponentialRampToValueAtTime(freq * pitch() * 0.7, now + 0.25 * decay() * time);
+
+    const g = envGain(0.001, 0.3 * decay() * time, 0.9);
+    osc.connect(g);
+    routeToOutput(g);
+    osc.start(now);
+    osc.stop(now + 0.4 * decay() * time);
+
+    // Noise-Anteil für mehr "Wumms"
+    const bufferSize = ctx.sampleRate * 0.1;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const nG = envGain(0.001, 0.05 * decay() * time, 0.15);
+    noise.connect(nG);
+    routeToOutput(nG);
+    noise.start(now);
+    noise.stop(now + 0.08);
+  }
+
+  function playCymbal(time = 1, crash = true) {
+    const now = ctx.currentTime;
+    const dur = (crash ? 1.2 : 0.5) * decay() * time;
+    const bufferSize = ctx.sampleRate * (dur + 0.2);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = (crash ? 4000 : 6000) * pitch();
+
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.linearRampToValueAtTime(0.4, now + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+    noise.connect(hp);
+    hp.connect(g);
+    routeToOutput(g);
+    noise.start(now);
+    noise.stop(now + dur + 0.1);
+  }
+
+  function playRim(time = 0.1) {
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = 400 * pitch();
+    const g = envGain(0.001, 0.04 * decay() * time, 0.5);
+    osc.connect(g);
+    routeToOutput(g);
+    osc.start(now);
+    osc.stop(now + 0.06);
+  }
+
+  function playCowbell(time = 0.4) {
+    const now = ctx.currentTime;
+    const dur = 0.3 * decay() * time;
+    [540, 800].forEach(f => {
+      const osc = ctx.createOscillator();
+      osc.type = 'square';
+      osc.frequency.value = f * pitch();
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = f * pitch();
+      bp.Q.value = 3;
+      const g = envGain(0.001, dur, 0.35);
+      osc.connect(bp);
+      bp.connect(g);
+      routeToOutput(g);
+      osc.start(now);
+      osc.stop(now + dur + 0.05);
+    });
+  }
+
+  function playShaker(time = 0.1) {
+    const now = ctx.currentTime;
+    const dur = 0.08 * decay() * time;
+    const bufferSize = ctx.sampleRate * (dur + 0.05);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 5000 * pitch();
+    bp.Q.value = 0.8;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.4, now + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    noise.connect(bp);
+    bp.connect(g);
+    routeToOutput(g);
+    noise.start(now);
+    noise.stop(now + dur + 0.02);
+  }
+
+  // ---------- Pad-Definitionen (pro Kit unterschiedliche Parameter) ----------
+  const KITS = {
+    '808': {
+      kick:    () => playKick(0.8, 0.85),
+      snare:   () => playSnare(0.25, 1),
+      clap:    () => playClap(0.2),
+      hatCl:   () => playHat(0.05, false),
+      hatOp:   () => playHat(0.3, true),
+      tomLo:   () => playTom(90, 0.5),
+      tomMid:  () => playTom(130, 0.45),
+      tomHi:   () => playTom(180, 0.4),
+      crash:   () => playCymbal(1.1, true),
+      ride:    () => playCymbal(0.6, false),
+      rim:     () => playRim(0.1),
+      cowbell: () => playCowbell(0.4),
+    },
+    '909': {
+      kick:    () => playKick(0.55, 1.05),
+      snare:   () => playSnare(0.18, 1.4),
+      clap:    () => playClap(0.22),
+      hatCl:   () => playHat(0.04, false),
+      hatOp:   () => playHat(0.25, true),
+      tomLo:   () => playTom(100, 0.4),
+      tomMid:  () => playTom(150, 0.35),
+      tomHi:   () => playTom(200, 0.3),
+      crash:   () => playCymbal(0.9, true),
+      ride:    () => playCymbal(0.5, false),
+      rim:     () => playRim(0.08),
+      cowbell: () => playCowbell(0.3),
+    },
+    'acoustic': {
+      kick:    () => playKick(0.7, 0.9),
+      snare:   () => playSnare(0.3, 0.9),
+      clap:    () => playClap(0.25),
+      hatCl:   () => playHat(0.06, false),
+      hatOp:   () => playHat(0.4, true),
+      tomLo:   () => playTom(80, 0.6),
+      tomMid:  () => playTom(120, 0.55),
+      tomHi:   () => playTom(170, 0.5),
+      crash:   () => playCymbal(1.4, true),
+      ride:    () => playCymbal(0.8, false),
+      rim:     () => playRim(0.15),
+      cowbell: () => playCowbell(0.5),
+    },
+    'electro': {
+      kick:    () => playKick(0.5, 0.75),
+      snare:   () => playSnare(0.15, 1.6),
+      clap:    () => playClap(0.18),
+      hatCl:   () => playHat(0.03, false),
+      hatOp:   () => playHat(0.2, true),
+      tomLo:   () => playTom(110, 0.3),
+      tomMid:  () => playTom(160, 0.25),
+      tomHi:   () => playTom(220, 0.2),
+      crash:   () => playCymbal(0.7, true),
+      ride:    () => playCymbal(0.4, false),
+      rim:     () => playRim(0.06),
+      cowbell: () => playCowbell(0.25),
+    },
+  };
+
+  // Pad-Layout: 12 Pads, 4 Spalten x 3 Reihen
+  const PAD_LAYOUT = [
+    { id: 'kick',    name: 'Kick',      icon: '🥁', cat: 'kick',   key: 'Q' },
+    { id: 'snare',   name: 'Snare',     icon: '🥁', cat: 'snare',  key: 'W' },
+    { id: 'clap',    name: 'Clap',      icon: '👏', cat: 'clap',   key: 'E' },
+    { id: 'cowbell', name: 'Cowbell',   icon: '🔔', cat: 'perc',   key: 'R' },
+
+    { id: 'tomLo',   name: 'Tom Lo',    icon: '🪘', cat: 'tom',    key: 'A' },
+    { id: 'tomMid',  name: 'Tom Mid',   icon: '🪘', cat: 'tom',    key: 'S' },
+    { id: 'tomHi',   name: 'Tom Hi',    icon: '🪘', cat: 'tom',    key: 'D' },
+    { id: 'rim',     name: 'Rim',       icon: '🎯', cat: 'perc',   key: 'F' },
+
+    { id: 'hatCl',   name: 'Hat Closed', icon: '🎩', cat: 'hat',   key: 'Z' },
+    { id: 'hatOp',   name: 'Hat Open',   icon: '🎩', cat: 'hat',   key: 'X' },
+    { id: 'crash',   name: 'Crash',      icon: '💥', cat: 'cymbal', key: 'C' },
+    { id: 'ride',    name: 'Ride',       icon: '🔕', cat: 'cymbal', key: 'V' },
+  ];
+
+  const padElements = [];
+
+  function buildPads() {
+    padsContainer.innerHTML = '';
+    padElements.length = 0;
+
+    PAD_LAYOUT.forEach(padDef => {
+      const el = document.createElement('div');
+      el.classList.add('pad');
+      el.dataset.cat = padDef.cat;
+      el.dataset.padId = padDef.id;
+      el.innerHTML = `
+        <span class="key-hint">${padDef.key}</span>
+        <span class="icon">${padDef.icon}</span>
+        <span class="name">${padDef.name}</span>
+      `;
+
+      el.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (ctx.state === 'suspended') ctx.resume();
+        triggerPad(padDef.id, el);
+      });
+
+      padsContainer.appendChild(el);
+      padElements.push({ el, def: padDef });
+    });
+  }
+
+  function triggerPad(padId, el) {
+    const kit = KITS[currentKit];
+    if (kit && kit[padId]) {
+      kit[padId]();
+      display.textContent = padId.toUpperCase();
+
+      // Aktive Klasse kurz hinzufügen
+      el.classList.add('active');
+      clearTimeout(el._activeTimer);
+      el._activeTimer = setTimeout(() => {
+        el.classList.remove('active');
+      }, 120);
+    }
+  }
+
+  // Preset-Buttons
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentKit = btn.dataset.kit;
+      kitDisplay.textContent = currentKit.toUpperCase();
+    });
+  });
+
+  // Tastatur
+  const keyMap = {};
+  PAD_LAYOUT.forEach(p => keyMap[p.key.toLowerCase()] = p.id);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
+    const padId = keyMap[e.key.toLowerCase()];
+    if (!padId) return;
+    const entry = padElements.find(p => p.def.id === padId);
+    if (entry) {
+      if (ctx.state === 'suspended') ctx.resume();
+      triggerPad(padId, entry.el);
+    }
+  });
+
+  // AudioContext entsperren
+  document.addEventListener('touchstart', () => {
+    if (ctx.state === 'suspended') ctx.resume();
+  }, { once: true });
+
+  document.addEventListener('click', () => {
+    if (ctx.state === 'suspended') ctx.resume();
+  }, { once: true });
+
+  // Init
+  buildPads();
+  kitDisplay.textContent = '808';
+</script>
+</body>
+</html>
